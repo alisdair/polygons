@@ -3,10 +3,11 @@ class Vertex
     new Vertex(v...) for v in vertices
 
   constructor: (@x, @y) ->
+    @colour = "#0c0"
 
   draw: (context) ->
     context.beginPath()
-    context.fillStyle = "#0c0"
+    context.fillStyle = @colour
     context.arc @x, @y, 5, 0, Math.PI*2, true
     context.fill()
 
@@ -38,6 +39,9 @@ class Polygon
     context.lineTo @vertices[0].x, @vertices[0].y if @closed
     context.stroke()
 
+  intersects: (point) ->
+    Math.random() < 0.5
+
 cursor = (canvas, e) ->
   o = canvas.offset()
   db = document.body
@@ -50,7 +54,7 @@ $(document).ready ->
   context = canvas[0].getContext("2d")
 
   vertices = []
-  vertex = null
+  point = null
   line = null
   polygon = null
 
@@ -64,15 +68,16 @@ $(document).ready ->
     end = new Vertex (cursor canvas, e)...
     line = new Line(start, end)
 
-  point = (e) ->
-    vertex = new Vertex (cursor canvas, e)...
+  circle = (e) ->
+    point = new Vertex (cursor canvas, e)...
+    point.colour = "#c00" if polygon.intersects point
 
   close = (e) ->
     append e
     polygon.close()
     line = null
     canvas.off "mouseup mousemove dblclick"
-    canvas.mousedown point
+    canvas.mousedown circle
   
   canvas.mouseup append
   canvas.mousemove extend
@@ -85,5 +90,5 @@ $(document).ready ->
     context.clearRect 0, 0, canvas.width(), canvas.height()
     polygon.draw(context) if polygon
     line.draw(context) if line
-    vertex.draw(context) if vertex
+    point.draw(context) if point
   )()
