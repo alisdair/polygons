@@ -53,18 +53,16 @@ $(document).ready ->
   context = canvas[0].getContext("2d")
   context.lineWidth = 2.5
 
-  vertices = []
-  polygon = undefined
+  polygon = new Polygon []
   line = undefined
   polygons = []
 
   append = (e) ->
-    vertices.push new Point (cursor canvas, e)...
-    polygon = new Polygon vertices
+    polygon.vertices.push new Point (cursor canvas, e)...
 
   extend = (e) ->
-    return unless vertices.length > 0
-    start = vertices[vertices.length - 1]
+    return unless polygon.vertices.length > 0
+    start = polygon.vertices[polygon.vertices.length - 1]
     end = new Point (cursor canvas, e)...
     line = new Line(start, end)
 
@@ -77,8 +75,7 @@ $(document).ready ->
     polygon.closed = true
     polygon.colour = "hsl(#{~~(Math.random() * 360)}, 60%, 60%)";
     polygons.push polygon
-    vertices = []
-    polygon = undefined
+    polygon = new Polygon []
     line = undefined
   
   canvas.mouseup append
