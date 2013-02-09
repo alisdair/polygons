@@ -86,15 +86,15 @@ $(document).ready ->
     end = new Vertex (cursor canvas, e)...
     line = new Line(start, end)
 
-  circle = (e) ->
+  intersect = (e) ->
     point = new Vertex (cursor canvas, e)...
-    point.colour = "#c00" unless polygon.contains point
+    polygon.filled = polygon.contains point
 
   close = (e) ->
     polygon.close()
     line = null
     canvas.off "mouseup mousemove keydown"
-    canvas.mousedown circle
+    canvas.mousemove intersect
   
   canvas.mouseup append
   canvas.mousemove extend
@@ -109,5 +109,4 @@ $(document).ready ->
     context.clearRect 0, 0, canvas.width(), canvas.height()
     polygon.draw(context) if polygon
     line.draw(context) if line
-    point.draw(context) if point
   )()
