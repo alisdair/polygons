@@ -31,6 +31,7 @@ class Polygon
   constructor: (@vertices) ->
     @closed = false
     @filled = false
+    @colour = "hsl(0, 60%, 60%)"
 
   close: ->
     @closed = true
@@ -38,11 +39,13 @@ class Polygon
   draw: (context) ->
     return if @vertices.length < 1
     context.beginPath()
-    context.fillStyle = "#aaf"
-    context.strokeStyle = "#00b"
+    context.fillStyle = @colour
+    context.strokeStyle = @colour
+    context.lineWidth = 2.5
     context.lineTo v.x, v.y for v in @vertices
     context.lineTo @vertices[0].x, @vertices[0].y if @closed
     context.stroke()
+    context.globalAlpha = 0.5
     context.fill() if @filled
 
   # http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
@@ -92,6 +95,7 @@ $(document).ready ->
 
   close = (e) ->
     polygon.close()
+    polygon.colour = "hsl(#{~~(Math.random() * 360)}, 60%, 60%)";
     polygons.push polygon
     vertices = []
     polygon = undefined
