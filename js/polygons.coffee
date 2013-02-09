@@ -12,7 +12,7 @@ class Vertex
     context.fill()
 
   toString: ->
-    "(#{@x}, #{y})"
+    "(#{@x}, #{@y})"
 
 class Line
   constructor: (@start, @end) ->
@@ -24,9 +24,13 @@ class Line
     context.lineTo @end.x, @end.y
     context.stroke()
 
+  toString: ->
+    "#{@start}-#{@end}"
+
 class Polygon
   constructor: (@vertices) ->
     @closed = false
+    @filled = false
 
   close: ->
     @closed = true
@@ -34,13 +38,27 @@ class Polygon
   draw: (context) ->
     return if @vertices.length < 1
     context.beginPath()
+    context.fillStyle = "#aaf"
     context.strokeStyle = "#00b"
     context.lineTo v.x, v.y for v in @vertices
     context.lineTo @vertices[0].x, @vertices[0].y if @closed
     context.stroke()
+    context.fill() if @filled
 
-  intersects: (point) ->
-    Math.random() < 0.5
+  # http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+  contains: (point) ->
+    inside  = false
+    [i, j] = [0, @vertices.length - 1]
+    while i < @vertices.length
+      [a, b] = [@vertices[i], @vertices[j]]
+
+      intersect = ((a.y > point.y) != (b.y > point.y))
+      below = point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x
+      inside = !inside if intersect && below
+
+      j = i
+      i += 1
+    inside
 
 cursor = (canvas, e) ->
   o = canvas.offset()
@@ -70,18 +88,19 @@ $(document).ready ->
 
   circle = (e) ->
     point = new Vertex (cursor canvas, e)...
-    point.colour = "#c00" if polygon.intersects point
+    point.colour = "#c00" unless polygon.contains point
 
   close = (e) ->
-    append e
     polygon.close()
     line = null
-    canvas.off "mouseup mousemove dblclick"
+    canvas.off "mouseup mousemove keydown"
     canvas.mousedown circle
   
   canvas.mouseup append
   canvas.mousemove extend
-  canvas.dblclick close
+  canvas.keydown close
+  canvas.attr("tabindex", 0)
+  canvas.focus
 
   canvas.on "selectstart", -> false
 
