@@ -1,31 +1,17 @@
-class Vertex
-  @list: (vertices) ->
-    new Vertex(v...) for v in vertices
+class Point
+  @list: (points) ->
+    new Point(p...) for p in points
 
   constructor: (@x, @y) ->
-    @colour = "#0c0"
-
-  draw: (context) ->
-    context.beginPath()
-    context.fillStyle = @colour
-    context.arc @x, @y, 5, 0, Math.PI*2, true
-    context.fill()
-
-  toString: ->
-    "(#{@x}, #{@y})"
 
 class Line
   constructor: (@start, @end) ->
 
   draw: (context) ->
     context.beginPath()
-    context.strokeStyle = "#999"
     context.moveTo @start.x, @start.y
     context.lineTo @end.x, @end.y
     context.stroke()
-
-  toString: ->
-    "#{@start}-#{@end}"
 
 class Polygon
   constructor: (@vertices) ->
@@ -33,15 +19,10 @@ class Polygon
     @filled = false
     @colour = "hsl(0, 60%, 60%)"
 
-  close: ->
-    @closed = true
-
   draw: (context) ->
     return if @vertices.length < 1
     context.beginPath()
-    context.fillStyle = @colour
-    context.strokeStyle = @colour
-    context.lineWidth = 2.5
+    context.fillStyle = context.strokeStyle = @colour
     context.lineTo v.x, v.y for v in @vertices
     context.lineTo @vertices[0].x, @vertices[0].y if @closed
     context.stroke()
@@ -50,18 +31,15 @@ class Polygon
 
   # http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
   contains: (point) ->
-    inside  = false
-    [i, j] = [0, @vertices.length - 1]
-    while i < @vertices.length
-      [a, b] = [@vertices[i], @vertices[j]]
-
+    return false unless @vertices.length > 0
+    crossings = 0
+    b = @vertices[@vertices.length - 1]
+    for a in @vertices
       intersect = ((a.y > point.y) != (b.y > point.y))
       below = point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x
-      inside = !inside if intersect && below
-
-      j = i
-      i += 1
-    inside
+      crossings++ if intersect && below
+      b = a
+    crossings % 2 == 1
 
 cursor = (canvas, e) ->
   o = canvas.offset()
@@ -73,6 +51,7 @@ cursor = (canvas, e) ->
 $(document).ready ->
   canvas = $("canvas")
   context = canvas[0].getContext("2d")
+  context.lineWidth = 2.5
 
   vertices = []
   polygon = undefined
@@ -80,21 +59,22 @@ $(document).ready ->
   polygons = []
 
   append = (e) ->
-    vertices.push new Vertex (cursor canvas, e)...
+    vertices.push new Point (cursor canvas, e)...
     polygon = new Polygon vertices
 
   extend = (e) ->
     return unless vertices.length > 0
     start = vertices[vertices.length - 1]
-    end = new Vertex (cursor canvas, e)...
+    end = new Point (cursor canvas, e)...
     line = new Line(start, end)
 
   intersect = (e) ->
-    point = new Vertex (cursor canvas, e)...
+    point = new Point (cursor canvas, e)...
     p.filled = p.contains point for p in polygons
 
   close = (e) ->
-    polygon.close()
+    return unless polygon?
+    polygon.closed = true
     polygon.colour = "hsl(#{~~(Math.random() * 360)}, 60%, 60%)";
     polygons.push polygon
     vertices = []
@@ -105,6 +85,7 @@ $(document).ready ->
   canvas.mousemove extend
   canvas.mousemove intersect
   canvas.keydown close
+
   canvas.attr("tabindex", 0)
   canvas.focus
 
@@ -113,7 +94,7 @@ $(document).ready ->
   (render = ->
     requestAnimationFrame render
     context.clearRect 0, 0, canvas.width(), canvas.height()
-    polygon.draw(context) if polygon?
     p.draw(context) for p in polygons
+    polygon.draw(context) if polygon?
     line.draw(context) if line?
   )()
