@@ -72,9 +72,9 @@ $(document).ready ->
   context = canvas[0].getContext("2d")
 
   vertices = []
-  point = null
-  line = null
-  polygon = null
+  polygon = undefined
+  line = undefined
+  polygons = []
 
   append = (e) ->
     vertices.push new Vertex (cursor canvas, e)...
@@ -88,16 +88,18 @@ $(document).ready ->
 
   intersect = (e) ->
     point = new Vertex (cursor canvas, e)...
-    polygon.filled = polygon.contains point
+    p.filled = p.contains point for p in polygons
 
   close = (e) ->
     polygon.close()
-    line = null
-    canvas.off "mouseup mousemove keydown"
-    canvas.mousemove intersect
+    polygons.push polygon
+    vertices = []
+    polygon = undefined
+    line = undefined
   
   canvas.mouseup append
   canvas.mousemove extend
+  canvas.mousemove intersect
   canvas.keydown close
   canvas.attr("tabindex", 0)
   canvas.focus
@@ -107,6 +109,7 @@ $(document).ready ->
   (render = ->
     requestAnimationFrame render
     context.clearRect 0, 0, canvas.width(), canvas.height()
-    polygon.draw(context) if polygon
-    line.draw(context) if line
+    polygon.draw(context) if polygon?
+    p.draw(context) for p in polygons
+    line.draw(context) if line?
   )()
