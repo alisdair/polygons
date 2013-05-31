@@ -73,7 +73,7 @@ $(document).ready ->
   close = (e) ->
     return unless polygon?
     polygon.closed = true
-    polygon.colour = "hsl(#{~~(Math.random() * 360)}, 60%, 60%)";
+    polygon.colour = "hsl(#{~~(Math.random() * 360)}, 60%, 60%)"
     polygons.push polygon
     polygon = new Polygon []
     line = undefined
