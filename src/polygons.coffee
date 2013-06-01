@@ -42,15 +42,14 @@ class Polygon
     crossings % 2 == 1
 
 cursor = (canvas, e) ->
-  o = canvas.offset()
   db = document.body
   de = document.documentElement
-  [e.clientX + db.scrollLeft + de.scrollLeft - Math.floor(o.left),
-   e.clientY + db.scrollTop + de.scrollTop - Math.floor(o.top) + 1]
+  [e.clientX + db.scrollLeft + de.scrollLeft - Math.floor(canvas.offsetLeft),
+   e.clientY + db.scrollTop + de.scrollTop - Math.floor(canvas.offsetTop) + 1]
 
-$(document).ready ->
-  canvas = $("canvas")
-  context = canvas[0].getContext("2d")
+window.onload = ->
+  canvas = document.getElementsByTagName("canvas")[0]
+  context = canvas.getContext("2d")
   context.lineWidth = 2.5
 
   polygon = new Polygon []
@@ -78,19 +77,19 @@ $(document).ready ->
     polygon = new Polygon []
     line = undefined
   
-  canvas.mouseup append
-  canvas.mousemove extend
-  canvas.mousemove intersect
-  canvas.keydown close
+  canvas.onmouseup = append
+  canvas.onmousemove = (element, event) ->
+    extend(element, event)
+    intersect(element, event)
+  canvas.onkeydown = close
 
-  canvas.attr("tabindex", 0)
-  canvas.focus
+  canvas.focus()
 
-  canvas.on "selectstart", -> false
+  canvas.onselectstart = -> false
 
   (render = ->
     requestAnimationFrame render
-    context.clearRect 0, 0, canvas.width(), canvas.height()
+    context.clearRect 0, 0, canvas.width, canvas.height
     p.draw(context) for p in polygons
     polygon.draw(context) if polygon?
     line.draw(context) if line?
