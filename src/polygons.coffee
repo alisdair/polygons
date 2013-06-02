@@ -1,7 +1,4 @@
 class Point
-  @list: (points) ->
-    new Point(p...) for p in points
-
   constructor: (@x, @y) ->
 
 class Line
