@@ -135,15 +135,33 @@ window.onload = ->
   canvas.focus()
   canvas.onselectstart = -> false
 
+  # Shim for requestAnimationFrame, from [jrus][jrus]
+  #
+  # [jrus]: https://gist.github.com/paulirish/1579671/#comment-91474
+  do ->
+      w = window
+      for vendor in ['ms', 'moz', 'webkit', 'o']
+          break if w.requestAnimationFrame
+          w.requestAnimationFrame = w["#{vendor}RequestAnimationFrame"]
+          w.cancelAnimationFrame = (w["#{vendor}CancelAnimationFrame"] or
+                                    w["#{vendor}CancelRequestAnimationFrame"])
+
+      targetTime = 0
+      w.requestAnimationFrame or= (callback) ->
+          targetTime = Math.max targetTime + 16, currentTime = +new Date
+          w.setTimeout (-> callback +new Date), targetTime - currentTime
+
+      w.cancelAnimationFrame or= (id) -> clearTimeout id
+
   # The render loop:
   #
-  # 1. Request an animation frame (sucks to be you, IE9)
+  # 1. Request an animation frame
   # 2. Clear the canvas.
   # 3. Draw each of the finished polygons in the list.
   # 4. Draw the new polygon.
   # 5. Draw the extending line if it exists.
   (render = ->
-    requestAnimationFrame render
+    window.requestAnimationFrame render
     context.clearRect 0, 0, canvas.width, canvas.height
     p.draw(context) for p in polygons
     polygon.draw(context) if polygon?
