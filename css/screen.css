@@ -1,4 +1,4 @@
-* { box-sizing: border-box }
+* { -moz-box-sizing: border-box; box-sizing: border-box }
 html, body { background: #ddd; color: #222; font: 16px sans-serif }
 #wrapper { width: 640px; background: #fff; margin: 0 auto; padding: 0 20px; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.2)  }
 p, canvas { margin: 1em 0 }
