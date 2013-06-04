@@ -85,14 +85,15 @@ window.onload = ->
   cursor = (e) ->
     db = document.body
     de = document.documentElement
-    [e.clientX + db.scrollLeft + de.scrollLeft - Math.floor(canvas.offsetLeft),
-     e.clientY + db.scrollTop + de.scrollTop - Math.floor(canvas.offsetTop) + 1]
+    x = e.clientX + db.scrollLeft + de.scrollLeft - Math.floor(canvas.offsetLeft)
+    y = e.clientY + db.scrollTop + de.scrollTop - Math.floor(canvas.offsetTop) + 1
+    new Point(x, y)
 
   # Now we define several functions to modify the state of the user interface.
 
   # Append: add a new vertex to the polygon at the position of `e`.
   append = (e) ->
-    polygon.vertices.push new Point (cursor e)...
+    polygon.vertices.push cursor e
 
   # Extend: create a line in extension from the polygon's last vertex to the
   # position at `e`. This indicates where the user's next click will add a
@@ -100,13 +101,13 @@ window.onload = ->
   extend = (e) ->
     return unless polygon.vertices.length > 0
     start = polygon.vertices[polygon.vertices.length - 1]
-    end = new Point (cursor e)...
+    end = cursor e
     line = new Line(start, end)
 
   # Intersect: calculate point-in-polygon intersection for the point at the
   # cursor and each of the existing polygons.
   intersect = (e) ->
-    point = new Point (cursor e)...
+    point = cursor e
     p.filled = p.contains point for p in polygons
 
   # Close: complete the current polygon, choose a random colour, and add it to
