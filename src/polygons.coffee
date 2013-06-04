@@ -13,6 +13,12 @@
 class Point
   constructor: (@x, @y) ->
 
+  distanceTo: (p) ->
+    return false unless p?
+    dx = p.x - @x
+    dy = p.y - @y
+    Math.sqrt dx * dx + dy * dy
+
 # Polygons are described by a list of points, or vertices.
 class Polygon
   constructor: (@vertices) ->
@@ -87,13 +93,26 @@ window.onload = ->
     de = document.documentElement
     x = e.clientX + db.scrollLeft + de.scrollLeft - Math.floor(canvas.offsetLeft)
     y = e.clientY + db.scrollTop + de.scrollTop - Math.floor(canvas.offsetTop) + 1
-    new Point(x, y)
+    p = new Point x, y
+    d = p.distanceTo polygon.vertices[0]
+    return if d < 15 then polygon.vertices[0] else p
 
   # Now we define several functions to modify the state of the user interface.
 
   # Append: add a new vertex to the polygon at the position of `e`.
   append = (e) ->
-    polygon.vertices.push cursor e
+    p = cursor e
+    polygon.vertices.push p
+
+    # If the last point is at the same position as the first point, complete
+    # the current polygon, choose a random colour, and add it to the list.
+    # Finally, start a new polygon, and reset the extending line.
+    if polygon.vertices.length > 1 && p.distanceTo(polygon.vertices[0]) == 0
+      polygon.closed = true
+      polygon.colour = "hsl(#{~~(Math.random() * 360)}, 60%, 60%)"
+      polygons.push polygon
+      polygon = new Polygon []
+      line = undefined
 
   # Extend: create a line in extension from the polygon's last vertex to the
   # position at `e`. This indicates where the user's next click will add a
@@ -110,27 +129,16 @@ window.onload = ->
     point = cursor e
     p.filled = p.contains point for p in polygons
 
-  # Close: complete the current polygon, choose a random colour, and add it to
-  # the list. Finally, start a new polygon, and reset the extending line.
-  close = (e) ->
-    return unless polygon?
-    polygon.closed = true
-    polygon.colour = "hsl(#{~~(Math.random() * 360)}, 60%, 60%)"
-    polygons.push polygon
-    polygon = new Polygon []
-    line = undefined
   
   # We then attach each of the user interface functions to the mouse and
   # keyboard event handlers.
   #
   # * On mouse click, append to the polygon;
-  # * On mouse move, draw an extending line, and recalculate intersections;
-  # * On keypress, close the current polygon.
+  # * On mouse move, draw an extending line, and recalculate intersections.
   canvas.onmouseup = append
   canvas.onmousemove = (event) ->
     extend event
     intersect event
-  canvas.onkeydown = close
 
   # Focus the canvas to catch keystrokes, and disable selection.
   canvas.focus()
