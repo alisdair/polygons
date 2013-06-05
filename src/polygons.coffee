@@ -1,6 +1,6 @@
-# Tis is a canvas toy which allows you to draw polygons with a mouse and
-# keyboard. Click to add a point to a polygon, and hit any key to close
-# and finish the polygon.
+# This is a canvas toy which demonstrates hit detection for arbitrary
+# polygons. Click anywhere to start creating a polygon. Click near the starting
+# point to close it.
 #
 # Finished polygons are filled when the mouse cursor points at them. This is
 # done using [Franklin's point in polygon algorithm][franklin].
