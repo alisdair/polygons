@@ -14,7 +14,7 @@ class Point
   constructor: (@x, @y) ->
 
   distanceTo: (p) ->
-    return false unless p?
+    return null unless p?
     dx = p.x - @x
     dy = p.y - @y
     Math.sqrt dx * dx + dy * dy
@@ -95,7 +95,7 @@ window.onload = ->
     y = e.clientY + db.scrollTop + de.scrollTop - Math.floor(canvas.offsetTop) + 1
     p = new Point x, y
     d = p.distanceTo polygon.vertices[0]
-    return if d < 15 then polygon.vertices[0] else p
+    return if d? and d < 15 then polygon.vertices[0] else p
 
   # Now we define several functions to modify the state of the user interface.
 
