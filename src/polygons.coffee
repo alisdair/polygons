@@ -32,9 +32,8 @@ class Polygon
     crossings = 0
     b = @vertices[@vertices.length - 1]
     for a in @vertices
-      intersect = ((a.y > point.y) != (b.y > point.y))
-      below = point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x
-      crossings++ if intersect && below
+      crossings++ if ((a.y > point.y) != (b.y > point.y)) &&
+                     point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x
       b = a
     crossings % 2 == 1
 
