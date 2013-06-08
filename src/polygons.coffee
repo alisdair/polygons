@@ -101,17 +101,21 @@ window.onload = ->
   # Append: add a new vertex to the polygon at the position of `e`.
   append = (e) ->
     p = cursor e
-    polygon.vertices.push p
 
-    # If the last point is at the same position as the first point, complete
-    # the current polygon, choose a random colour, and add it to the list.
-    # Finally, start a new polygon, and reset the extending line.
-    if polygon.vertices.length > 1 && p.distanceTo(polygon.vertices[0]) == 0
-      polygon.closed = true
-      polygon.colour = "hsl(#{~~(Math.random() * 360)}, 60%, 60%)"
-      polygons.push polygon
-      polygon = new Polygon []
-      line = undefined
+    # If this is the first point, or it's not at the same position as the
+    # first point, add it to the polygon.
+    if polygon.vertices.length == 0 || p.distanceTo(polygon.vertices[0]) > 0
+      polygon.vertices.push p
+      return
+
+    # Otherwise, this is the last point in the polgon. Close the current
+    # polygon, choose a random colour, and add it to the list. Finally, start a
+    # new polygon, and reset the extending line.
+    polygon.closed = true
+    polygon.colour = "hsl(#{~~(Math.random() * 360)}, 60%, 60%)"
+    polygons.push polygon
+    polygon = new Polygon []
+    line = undefined
 
   # Extend: create a line in extension from the polygon's last vertex to the
   # position at `e`. This indicates where the user's next click will add a
