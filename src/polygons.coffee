@@ -26,12 +26,46 @@ class Polygon
     @filled = false
     @colour = "hsl(0, 60%, 60%)"
 
-  # This is the interesting bit. I should really describe how this works.
+  # This is the ray casting algorithm. We consider a semi-infinite line
+  # starting at the given point, extending horizontally to the right. By
+  # counting the number of edges of the polygon that it intersects, we can
+  # determine whether the point is inside or outside. An even number of
+  # crossings means that the point is outside, and an odd number means that
+  # it is inside.
   contains: (point) ->
     return false unless @vertices.length > 0
+
     crossings = 0
+
+    # We consider each edge in turn, from `a` to `b`. Initialise `b` as the
+    # last vertex, and `a` as the first; run through the vertices in order.
     b = @vertices[@vertices.length - 1]
     for a in @vertices
+      # The ray crosses the edge if two conditions are met:
+      #
+      # * The ray must not be above or below the edge;
+      # * The ray must be to the left of the edge.
+      #
+      # The first condition is tested by ensuring that one (and only one) of
+      # the vertices of the edge is below the point. If both are below, or
+      # both are above, we do not evaluate the next test.
+      #
+      # This boolean shortcut is important in an edge case. If we calculate
+      # the second condition in the case where the edge is horizontal (i.e. `a.y
+      # == b.y`), the second condition will result in a divide by zero error.
+      #
+      # Our second condition is more complicated. The form of the test is
+      # comparing the point's x co-ordinate to some calculated value. This
+      # value is the x co-ordinate of the point on the line which has the y
+      # co-ordinate equal to `point.y`.
+      #
+      # The calculation is a multiplication of the width of the edge (`b.x -
+      # a.x`) by the relative position of the point (`point.y - a.y`) divided
+      # by the height of the edge (`b.y - a.y`), offset by the start of the
+      # edge (`+ a.x`).
+      #
+      # If the point is to the left of this position, then the ray intersects
+      # the edge, and we increment the number of crossings.
       crossings++ if ((a.y > point.y) != (b.y > point.y)) &&
                      point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x
       b = a
