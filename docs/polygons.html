@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>polygons.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>polygons.coffee</h1>
+        
+
+        
+      </div>
+
+      
+        
+        <p>This is a canvas toy which demonstrates hit detection for arbitrary
+polygons. Click anywhere to start creating a polygon. Click near the starting
+point to close it.</p>
+<p>Finished polygons are filled when the mouse cursor points at them. This is
+done using <a href="http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html">Franklin&#39;s point in polygon algorithm</a>.</p>
+<h3>Points, Polygons, and Lines</h3>
+<p>A point is a pair of cartesian co-ordinates, <code>x</code> and <code>y</code>.</p>
+
+        
+          <div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Point</span></span>
+  constructor: (<span class="property">@x</span>, <span class="property">@y</span>) -&gt;
+
+  distanceTo: (p) -&gt;
+    <span class="keyword">return</span> <span class="literal">null</span> <span class="keyword">unless</span> p?
+    dx = p.x - <span class="property">@x</span>
+    dy = p.y - <span class="property">@y</span>
+    Math.sqrt dx * dx + dy * dy</pre></div>
+        
+      
+        
+        <p>Polygons are described by a list of points, or vertices.</p>
+
+        
+          <div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Polygon</span></span>
+  constructor: (<span class="property">@vertices</span>) -&gt;
+    <span class="property">@closed</span> = <span class="literal">false</span>
+    <span class="property">@filled</span> = <span class="literal">false</span>
+    <span class="property">@colour</span> = <span class="string">"hsl(0, 60%, 60%)"</span></pre></div>
+        
+      
+        
+        <p>This is the ray casting algorithm. We consider a semi-infinite line
+starting at the given point, extending horizontally to the right. By
+counting the number of edges of the polygon that it intersects, we can
+determine whether the point is inside or outside. An even number of
+crossings means that the point is outside, and an odd number means that
+it is inside.</p>
+
+        
+          <div class='highlight'><pre>  contains: (point) -&gt;
+    <span class="keyword">return</span> <span class="literal">false</span> <span class="keyword">unless</span> <span class="property">@vertices</span>.length &gt; <span class="number">0</span>
+
+    crossings = <span class="number">0</span></pre></div>
+        
+      
+        
+        <p>We consider each edge in turn, from <code>a</code> to <code>b</code>. Initialise <code>b</code> as the
+last vertex, and <code>a</code> as the first; run through the vertices in order.</p>
+
+        
+          <div class='highlight'><pre>    b = <span class="property">@vertices</span>[<span class="property">@vertices</span>.length - <span class="number">1</span>]
+    <span class="keyword">for</span> a <span class="keyword">in</span> <span class="property">@vertices</span></pre></div>
+        
+      
+        
+        <p>The ray crosses the edge if two conditions are met:</p>
+<ul>
+<li>The ray must not be above or below the edge;</li>
+<li>The ray must be to the left of the edge.</li>
+</ul>
+<p>The first condition is tested by ensuring that one (and only one) of
+the vertices of the edge is below the point. If both are below, or
+both are above, we do not evaluate the next test.</p>
+<p>This boolean shortcut is important in an edge case. If we calculate
+the second condition in the case where the edge is horizontal (i.e. <code>a.y
+== b.y</code>), the second condition will result in a divide by zero error.</p>
+<p>Our second condition is more complicated. The form of the test is
+comparing the point&#39;s x co-ordinate to some calculated value. This
+value is the x co-ordinate of the point on the line which has the y
+co-ordinate equal to <code>point.y</code>.</p>
+<p>The calculation is a multiplication of the width of the edge (<code>b.x -
+a.x</code>) by the relative position of the point (<code>point.y - a.y</code>) divided
+by the height of the edge (<code>b.y - a.y</code>), offset by the start of the
+edge (<code>+ a.x</code>).</p>
+<p>If the point is to the left of this position, then the ray intersects
+the edge, and we increment the number of crossings.</p>
+
+        
+          <div class='highlight'><pre>      crossings++ <span class="keyword">if</span> ((a.y &gt; point.y) != (b.y &gt; point.y)) &amp;&amp;
+                     point.x &lt; (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x
+      b = a
+    crossings % <span class="number">2</span> == <span class="number">1</span></pre></div>
+        
+      
+        
+        <p>A polygon can draw itself into a canvas <code>context</code>.</p>
+<p>The polygon&#39;s outline is always drawn. If it is a closed polygon, a line is
+drawn from its last vertex back to its first. If it is marked as filled,
+the polygon has a translucent fill applied.</p>
+
+        
+          <div class='highlight'><pre>  draw: (context) -&gt;
+    <span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@vertices</span>.length &lt; <span class="number">1</span>
+    context.beginPath()
+    context.fillStyle = context.strokeStyle = <span class="property">@colour</span>
+    context.lineTo v.x, v.y <span class="keyword">for</span> v <span class="keyword">in</span> <span class="property">@vertices</span>
+    context.lineTo <span class="property">@vertices</span>[<span class="number">0</span>].x, <span class="property">@vertices</span>[<span class="number">0</span>].y <span class="keyword">if</span> <span class="property">@closed</span>
+    context.stroke()
+    context.globalAlpha = <span class="number">0.5</span>
+    context.fill() <span class="keyword">if</span> <span class="property">@filled</span></pre></div>
+        
+      
+        
+        <p>Lines are described by two points, <code>start</code> and <code>end</code>.</p>
+
+        
+          <div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Line</span></span>
+  constructor: (<span class="property">@start</span>, <span class="property">@end</span>) -&gt;</pre></div>
+        
+      
+        
+        <p>The line object can draw itself. This method is only used when selecting the
+next vertex of an in-progress polygon; the other lines of the polygon are
+drawn by the polygon itself.</p>
+
+        
+          <div class='highlight'><pre>  draw: (context) -&gt;
+    context.beginPath()
+    context.moveTo <span class="property">@start</span>.x, <span class="property">@start</span>.y
+    context.lineTo <span class="property">@end</span>.x, <span class="property">@end</span>.y
+    context.stroke()</pre></div>
+        
+      
+        
+        <h3>Canvas and UI</h3>
+<p>The user interface setup is handled in the window onload callback. This
+function closes over the state variables:</p>
+<ul>
+<li><code>canvas</code> is the canvas element we&#39;re drawing on, and <code>context</code> is its 2D
+drawing context;</li>
+<li><code>polygon</code> is the polygon currently being drawn;</li>
+<li><code>line</code> is the extension line from the last vertex of <code>polygon</code> to the
+cursor;</li>
+<li><code>polygons</code> is the collection of finished polygons.</li>
+</ul>
+
+        
+          <div class='highlight'><pre>window.<span class="function"><span class="title">onload</span></span> = -&gt;
+  canvas = document.getElementsByTagName(<span class="string">"canvas"</span>)[<span class="number">0</span>]
+  context = canvas.getContext(<span class="string">"2d"</span>)
+  context.lineWidth = <span class="number">2.5</span>
+
+  polygon = <span class="keyword">new</span> Polygon []
+  line = <span class="literal">undefined</span>
+  polygons = []</pre></div>
+        
+      
+        
+        <p>The cursor function calculates the position of a given mouse event <code>e</code>
+relative to the <code>canvas</code> origin.</p>
+
+        
+          <div class='highlight'><pre>  <span class="function"><span class="title">cursor</span></span> = (e) -&gt;
+    db = document.body
+    de = document.documentElement
+    x = e.clientX + db.scrollLeft + de.scrollLeft - Math.floor(canvas.offsetLeft)
+    y = e.clientY + db.scrollTop + de.scrollTop - Math.floor(canvas.offsetTop) + <span class="number">1</span>
+    p = <span class="keyword">new</span> Point x, y
+    d = p.distanceTo polygon.vertices[<span class="number">0</span>]
+    <span class="keyword">return</span> <span class="keyword">if</span> d? <span class="keyword">and</span> d &lt; <span class="number">15</span> <span class="keyword">then</span> polygon.vertices[<span class="number">0</span>] <span class="keyword">else</span> p</pre></div>
+        
+      
+        
+        <p>Now we define several functions to modify the state of the user interface.</p>
+<p>Append: add a new vertex to the polygon at the position of <code>e</code>.</p>
+
+        
+          <div class='highlight'><pre>  <span class="function"><span class="title">append</span></span> = (e) -&gt;
+    p = cursor e</pre></div>
+        
+      
+        
+        <p>If this is the first point, or it&#39;s not at the same position as the
+first point, add it to the polygon.</p>
+
+        
+          <div class='highlight'><pre>    <span class="keyword">if</span> polygon.vertices.length == <span class="number">0</span> || p.distanceTo(polygon.vertices[<span class="number">0</span>]) &gt; <span class="number">0</span>
+      polygon.vertices.push p
+      <span class="keyword">return</span></pre></div>
+        
+      
+        
+        <p>Otherwise, this is the last point in the polgon. Close the current
+polygon, choose a random colour, and add it to the list. Finally, start a
+new polygon, and reset the extending line.</p>
+
+        
+          <div class='highlight'><pre>    polygon.closed = <span class="literal">true</span>
+    polygon.colour = <span class="string">"hsl(<span class="subst">#{~~(Math.random() * <span class="number">360</span>)}</span>, 60%, 60%)"</span>
+    polygons.push polygon
+    polygon = <span class="keyword">new</span> Polygon []
+    line = <span class="literal">undefined</span></pre></div>
+        
+      
+        
+        <p>Extend: create a line in extension from the polygon&#39;s last vertex to the
+position at <code>e</code>. This indicates where the user&#39;s next click will add a
+vertex.</p>
+
+        
+          <div class='highlight'><pre>  <span class="function"><span class="title">extend</span></span> = (e) -&gt;
+    <span class="keyword">return</span> <span class="keyword">unless</span> polygon.vertices.length &gt; <span class="number">0</span>
+    start = polygon.vertices[polygon.vertices.length - <span class="number">1</span>]
+    end = cursor e
+    line = <span class="keyword">new</span> Line(start, end)</pre></div>
+        
+      
+        
+        <p>Intersect: calculate point-in-polygon intersection for the point at the
+cursor and each of the existing polygons.</p>
+
+        
+          <div class='highlight'><pre>  <span class="function"><span class="title">intersect</span></span> = (e) -&gt;
+    point = cursor e
+    p.filled = p.contains point <span class="keyword">for</span> p <span class="keyword">in</span> polygons</pre></div>
+        
+      
+        
+        <p>We then attach each of the user interface functions to the mouse and
+keyboard event handlers.</p>
+<ul>
+<li>On mouse click, append to the polygon;</li>
+<li>On mouse move, draw an extending line, and recalculate intersections.</li>
+</ul>
+
+        
+          <div class='highlight'><pre>  canvas.onmouseup = append
+  canvas.<span class="function"><span class="title">onmousemove</span></span> = (event) -&gt;
+    extend event
+    intersect event</pre></div>
+        
+      
+        
+        <p>Focus the canvas to catch keystrokes, and disable selection.</p>
+
+        
+          <div class='highlight'><pre>  canvas.focus()
+  canvas.<span class="function"><span class="title">onselectstart</span></span> = -&gt; <span class="literal">false</span></pre></div>
+        
+      
+        
+        <p>Shim for requestAnimationFrame, from <a href="https://gist.github.com/paulirish/1579671/#comment-91474">jrus</a></p>
+
+        
+          <div class='highlight'><pre>  <span class="keyword">do</span> -&gt;
+      w = window
+      <span class="keyword">for</span> vendor <span class="keyword">in</span> [<span class="string">'ms'</span>, <span class="string">'moz'</span>, <span class="string">'webkit'</span>, <span class="string">'o'</span>]
+          <span class="keyword">break</span> <span class="keyword">if</span> w.requestAnimationFrame
+          w.requestAnimationFrame = w[<span class="string">"<span class="subst">#{vendor}</span>RequestAnimationFrame"</span>]
+          w.cancelAnimationFrame = (w[<span class="string">"<span class="subst">#{vendor}</span>CancelAnimationFrame"</span>] <span class="keyword">or</span>
+                                    w[<span class="string">"<span class="subst">#{vendor}</span>CancelRequestAnimationFrame"</span>])
+
+      targetTime = <span class="number">0</span>
+      w.requestAnimationFrame <span class="function"><span class="title">or</span></span>= (callback) -&gt;
+          targetTime = Math.max targetTime + <span class="number">16</span>, currentTime = +<span class="keyword">new</span> Date
+          w.setTimeout (-&gt; callback +<span class="keyword">new</span> Date), targetTime - currentTime
+
+      w.cancelAnimationFrame <span class="function"><span class="title">or</span></span>= (id) -&gt; clearTimeout id</pre></div>
+        
+      
+        
+        <p>The render loop:</p>
+<ol>
+<li>Request an animation frame</li>
+<li>Clear the canvas.</li>
+<li>Draw each of the finished polygons in the list.</li>
+<li>Draw the new polygon.</li>
+<li>Draw the extending line if it exists.</li>
+</ol>
+
+        
+          <div class='highlight'><pre>  (<span class="function"><span class="title">render</span></span> = -&gt;
+    window.requestAnimationFrame render
+    context.clearRect <span class="number">0</span>, <span class="number">0</span>, canvas.width, canvas.height
+    p.draw(context) <span class="keyword">for</span> p <span class="keyword">in</span> polygons
+    polygon.draw(context) <span class="keyword">if</span> polygon?
+    line.draw(context) <span class="keyword">if</span> line?
+  )()</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>
