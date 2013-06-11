@@ -2,6 +2,6 @@
 
 Playing with polygon drawing and intersection.
 
-Here, look:
+Try it out:
 
-http://codepen.io/alisdair/full/bBqog
+http://alisdair.github.io/polygons/
